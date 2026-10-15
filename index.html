@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>プロンプトビルダー（デモ版）</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="site-header">
+    <h1>プロンプトビルダー（デモ版）</h1>
+    <p>チェック項目を埋めるだけで、AIに伝わるプロンプトが完成</p>
+  </header>
+
+  <main class="layout">
+    <div class="inputs">
+      <!-- ① やりたいこと入力（F1） -->
+      <section class="card" aria-labelledby="sec-task">
+        <h2 id="sec-task">① やりたいことを入力</h2>
+        <label class="field-label" for="f-task">AIにやってほしいこと（一文で）</label>
+        <input type="text" id="f-task" autocomplete="off">
+      </section>
+
+      <!-- ② 用途を選ぶ（F2） -->
+      <section class="card" aria-labelledby="sec-template">
+        <h2 id="sec-template">② 用途を選ぶ</h2>
+        <div class="template-buttons" id="template-buttons" role="group" aria-labelledby="sec-template"></div>
+        <button type="button" class="btn btn-secondary btn-block" id="btn-fill-all">例を全部入れる</button>
+      </section>
+
+      <!-- ③ チェック項目（F3） -->
+      <section class="card" aria-labelledby="sec-fields">
+        <h2 id="sec-fields">③ チェック項目</h2>
+        <p class="note">空欄があっても大丈夫です。埋めるほどスコアが上がります。</p>
+
+        <div class="field" data-key="role">
+          <div class="field-head">
+            <label class="field-label" for="f-role">役割</label>
+            <span class="points" data-points="role"></span>
+            <button type="button" class="btn btn-small" data-fill="role">例を入れる</button>
+          </div>
+          <input type="text" id="f-role" autocomplete="off" aria-describedby="hint-role">
+          <p class="hint" id="hint-role"><span class="hint-label">なぜ必要？</span><span data-hint="role"></span></p>
+        </div>
+
+        <div class="field" data-key="purpose">
+          <div class="field-head">
+            <label class="field-label" for="f-purpose">目的・背景</label>
+            <span class="points" data-points="purpose"></span>
+            <button type="button" class="btn btn-small" data-fill="purpose">例を入れる</button>
+          </div>
+          <textarea id="f-purpose" rows="3" aria-describedby="hint-purpose"></textarea>
+          <p class="hint" id="hint-purpose"><span class="hint-label">なぜ必要？</span><span data-hint="purpose"></span></p>
+        </div>
+
+        <div class="field" data-key="premise">
+          <div class="field-head">
+            <label class="field-label" for="f-premise">前提（自分の状況）</label>
+            <span class="points" data-points="premise"></span>
+            <button type="button" class="btn btn-small" data-fill="premise">例を入れる</button>
+          </div>
+          <textarea id="f-premise" rows="3" aria-describedby="hint-premise"></textarea>
+          <p class="hint" id="hint-premise"><span class="hint-label">なぜ必要？</span><span data-hint="premise"></span></p>
+        </div>
+
+        <div class="field" data-key="conditions">
+          <div class="field-head">
+            <label class="field-label" for="f-conditions">条件・制約（1行に1つ）</label>
+            <span class="points" data-points="conditions"></span>
+            <button type="button" class="btn btn-small" data-fill="conditions">例を入れる</button>
+          </div>
+          <textarea id="f-conditions" rows="3" aria-describedby="hint-conditions"></textarea>
+          <p class="hint" id="hint-conditions"><span class="hint-label">なぜ必要？</span><span data-hint="conditions"></span></p>
+        </div>
+
+        <div class="field" data-key="format">
+          <div class="field-head">
+            <label class="field-label" for="f-format">出力形式</label>
+            <span class="points" data-points="format"></span>
+            <button type="button" class="btn btn-small" data-fill="format">例を入れる</button>
+          </div>
+          <input type="text" id="f-format" autocomplete="off" aria-describedby="hint-format">
+          <p class="hint" id="hint-format"><span class="hint-label">なぜ必要？</span><span data-hint="format"></span></p>
+        </div>
+
+        <div class="field" data-key="example">
+          <div class="field-head">
+            <label class="field-label" for="f-example">参考例</label>
+            <span class="points" data-points="example"></span>
+            <button type="button" class="btn btn-small" data-fill="example">例を入れる</button>
+          </div>
+          <textarea id="f-example" rows="3" aria-describedby="hint-example"></textarea>
+          <p class="hint" id="hint-example"><span class="hint-label">なぜ必要？</span><span data-hint="example"></span></p>
+        </div>
+
+        <button type="button" class="btn btn-ghost btn-block" id="btn-reset">リセット</button>
+      </section>
+    </div>
+
+    <!-- 結果エリア（F7・F6・F5） -->
+    <aside class="result" aria-labelledby="sec-result">
+      <h2 id="sec-result" class="visually-hidden">結果</h2>
+
+      <div class="ba">
+        <div class="ba-head">
+          <span class="ba-tag ba-before">Before</span>
+          <span class="count" id="count-before"></span>
+        </div>
+        <p class="before-text" id="before-text"></p>
+      </div>
+
+      <div class="ba">
+        <div class="ba-head">
+          <span class="ba-tag ba-after">After</span>
+          <span class="count" id="count-after"></span>
+        </div>
+        <pre class="after-text" id="after-text"></pre>
+      </div>
+
+      <div class="score" id="score">
+        <div class="score-head">
+          <span class="score-title">充実度スコア</span>
+          <span class="score-num"><strong id="score-value">0</strong>点 / 100</span>
+          <span class="score-label" id="score-label"></span>
+        </div>
+        <div class="score-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-labelledby="score-value" id="score-bar">
+          <div class="score-fill" id="score-fill"></div>
+        </div>
+        <ul class="advice" id="advice"></ul>
+      </div>
+
+      <div class="actions">
+        <button type="button" class="btn btn-primary btn-block" id="btn-copy" disabled>コピー</button>
+        <p class="copy-status" id="copy-status" role="status" aria-live="polite"></p>
+        <div class="ai-links">
+          <a class="btn btn-secondary" href="https://chatgpt.com/" target="_blank" rel="noopener">ChatGPTを開く</a>
+          <a class="btn btn-secondary" href="https://claude.ai/" target="_blank" rel="noopener">Claudeを開く</a>
+          <a class="btn btn-secondary" href="https://gemini.google.com/" target="_blank" rel="noopener">Geminiを開く</a>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <!-- 文言データ（templates.js）を先に読み込み、そのあとで処理（app.js）を読み込む -->
+  <script src="templates.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
