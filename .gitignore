@@ -1,0 +1,13 @@
+# Windows / Mac が自動で作るファイル
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# エディタの設定
+.vscode/
+
+# Claude Code の個人用設定
+.claude/settings.local.json
+
+# APIキーなどの秘密情報（将来のAI連携用）
+.env
