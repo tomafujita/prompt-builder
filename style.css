@@ -81,6 +81,12 @@ body {
     max-height: calc(100vh - 32px);
     overflow-y: auto;
   }
+
+  /* After が長くなってもスコアとコピーボタンが画面内に残るよう、After だけをスクロールさせる */
+  .result .after-text {
+    max-height: max(150px, calc(100vh - 540px));
+    overflow-y: auto;
+  }
 }
 
 /* ===== カード ===== */

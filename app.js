@@ -203,6 +203,66 @@
 
     // F6 スコア（F1は採点しない）
     renderScore(blocks);
+
+    // F5 やりたいことが空欄ならコピーできない
+    $("btn-copy").disabled = values.task === "";
+  }
+
+  // ---------------------------------------------------------------
+  //  F5 コピー
+  // ---------------------------------------------------------------
+  // clipboard API が使えない環境用：textarea を使ってコピーする
+  function fallbackCopy(text) {
+    const area = document.createElement("textarea");
+    area.value = text;
+    area.setAttribute("readonly", "");
+    area.style.position = "fixed";
+    area.style.top = "0";
+    area.style.left = "0";
+    area.style.opacity = "0";
+    document.body.appendChild(area);
+    area.select();
+    area.setSelectionRange(0, text.length);
+    let ok = false;
+    try {
+      ok = document.execCommand("copy");
+    } catch (e) {
+      ok = false;
+    }
+    document.body.removeChild(area);
+    return ok;
+  }
+
+  let statusTimer = null;
+  function showStatus(message) {
+    const status = $("copy-status");
+    status.textContent = message;
+    clearTimeout(statusTimer);
+    statusTimer = setTimeout(() => { status.textContent = ""; }, 2000);
+  }
+
+  function copyPrompt() {
+    if (currentPrompt === "") return;
+    const text = currentPrompt;
+    const done = (ok) => showStatus(ok ? MESSAGES.copied : MESSAGES.copyFailed);
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(
+        () => done(true),
+        () => done(fallbackCopy(text))
+      );
+    } else {
+      done(fallbackCopy(text));
+    }
+  }
+
+  // ---------------------------------------------------------------
+  //  リセット
+  // ---------------------------------------------------------------
+  function resetAll() {
+    if (!window.confirm(MESSAGES.confirmReset)) return;
+    ALL_KEYS.forEach((key) => { inputs[key].value = ""; });
+    update();
+    inputs.task.focus();
   }
 
   // ---------------------------------------------------------------
@@ -217,6 +277,8 @@
     btn.addEventListener("click", () => fillOne(btn.dataset.fill));
   });
   $("btn-fill-all").addEventListener("click", fillAll);
+  $("btn-copy").addEventListener("click", copyPrompt);
+  $("btn-reset").addEventListener("click", resetAll);
 
   update();
 })();
