@@ -136,6 +136,46 @@
   }
 
   // ---------------------------------------------------------------
+  //  F6 充実度スコア
+  // ---------------------------------------------------------------
+  // プロンプトに出る項目（＝入力がある項目）の配点を合計する
+  function renderScore(blocks) {
+    const empty = FIELD_KEYS.filter((key) => blocks[key] === "");
+    const total = FIELD_KEYS
+      .filter((key) => blocks[key] !== "")
+      .reduce((sum, key) => sum + (POINTS[key] || 0), 0);
+    const score = Math.min(100, total);
+
+    const level = LEVELS.slice()
+      .sort((a, b) => b.min - a.min)
+      .find((l) => score >= l.min) || LEVELS[LEVELS.length - 1];
+
+    $("score-value").textContent = String(score);
+    $("score-label").textContent = level.label;
+    $("score-fill").style.width = score + "%";
+    $("score-bar").setAttribute("aria-valuenow", String(score));
+    const box = $("score");
+    box.classList.remove("level-low", "level-mid", "level-high");
+    box.classList.add("level-" + level.level);
+
+    // 未入力の項目のアドバイスを、配点が高い順に最大3つ
+    const list = $("advice");
+    list.textContent = "";
+    const tips = empty
+      .slice()
+      .sort((a, b) => (POINTS[b] || 0) - (POINTS[a] || 0))
+      .slice(0, 3)
+      .map((key) => ADVICE[key])
+      .filter(Boolean);
+    if (tips.length === 0) tips.push(MESSAGES.allFilled);
+    tips.forEach((tip) => {
+      const li = document.createElement("li");
+      li.textContent = tip;
+      list.appendChild(li);
+    });
+  }
+
+  // ---------------------------------------------------------------
   //  画面の更新（入力のたびに呼ばれる）
   // ---------------------------------------------------------------
   let currentPrompt = "";
@@ -160,6 +200,9 @@
       after.classList.remove("is-empty");
       $("count-after").textContent = format(MESSAGES.charCount, countChars(currentPrompt));
     }
+
+    // F6 スコア（F1は採点しない）
+    renderScore(blocks);
   }
 
   // ---------------------------------------------------------------
