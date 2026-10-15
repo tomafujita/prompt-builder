@@ -78,9 +78,88 @@
   }
 
   // ---------------------------------------------------------------
+  //  F4 プロンプトの組み立て
+  // ---------------------------------------------------------------
+  // 役割：末尾の「です」「です。」「。」を取る
+  function cleanRole(text) {
+    return text.replace(/(です。?|。)$/, "").trim();
+  }
+
+  // やりたいこと：末尾「てほしい」→「てください」、末尾に「。」がなければ付ける
+  function cleanTask(text) {
+    let t = text.replace(/てほしい$/, "てください");
+    if (!t.endsWith("。")) t += "。";
+    return t;
+  }
+
+  // 条件・制約：1行に1つ。先頭の「・」「-」「*」は「・」にそろえ、空行は無視
+  function cleanConditions(text) {
+    return text.split(/\r?\n/)
+      .map((line) => line.trim().replace(/^[・\-*]\s*/, "").trim())
+      .filter((line) => line !== "")
+      .map((line) => PROMPT.bullet + line)
+      .join("\n");
+  }
+
+  // 各項目のブロック（空欄なら ""）を返す
+  function buildBlocks(values) {
+    const blocks = {};
+    const role = cleanRole(values.role);
+    blocks.role = role ? PROMPT.rolePrefix + role + PROMPT.roleSuffix : "";
+    blocks.task = values.task ? PROMPT.task + "\n" + cleanTask(values.task) : "";
+    ["purpose", "premise", "format", "example"].forEach((key) => {
+      blocks[key] = values[key] ? PROMPT[key] + "\n" + values[key] : "";
+    });
+    const conditions = cleanConditions(values.conditions);
+    blocks.conditions = conditions ? PROMPT.conditions + "\n" + conditions : "";
+    return blocks;
+  }
+
+  // ブロックを決まった順に並べ、空行1つでつなぐ
+  function joinBlocks(blocks) {
+    return ["role", "task", "purpose", "premise", "conditions", "format", "example"]
+      .map((key) => blocks[key])
+      .filter((block) => block !== "")
+      .join("\n\n");
+  }
+
+  // 前後の空白を取り除いた入力値
+  function readValues() {
+    const values = {};
+    ALL_KEYS.forEach((key) => { values[key] = inputs[key].value.trim(); });
+    return values;
+  }
+
+  // 文字数（絵文字なども1文字として数える）
+  function countChars(text) {
+    return Array.from(text).length;
+  }
+
+  // ---------------------------------------------------------------
   //  画面の更新（入力のたびに呼ばれる）
   // ---------------------------------------------------------------
+  let currentPrompt = "";
+
   function update() {
+    const values = readValues();
+    const blocks = buildBlocks(values);
+
+    // F7 Before / After
+    $("before-text").textContent = inputs.task.value;
+    $("count-before").textContent = format(MESSAGES.charCount, countChars(inputs.task.value));
+
+    const after = $("after-text");
+    if (values.task === "") {
+      currentPrompt = "";
+      after.textContent = MESSAGES.emptyAfter;
+      after.classList.add("is-empty");
+      $("count-after").textContent = "";
+    } else {
+      currentPrompt = joinBlocks(blocks);
+      after.textContent = currentPrompt;
+      after.classList.remove("is-empty");
+      $("count-after").textContent = format(MESSAGES.charCount, countChars(currentPrompt));
+    }
   }
 
   // ---------------------------------------------------------------
